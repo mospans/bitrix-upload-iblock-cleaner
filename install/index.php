@@ -24,13 +24,11 @@ Class mospans_uploadiblockcleaner extends CModule
 	{
 		global $DOCUMENT_ROOT, $APPLICATION;
 		RegisterModule($this->MODULE_ID);
-		$APPLICATION->IncludeAdminFile(GetMessage("INSTALL_TITLE"), $DOCUMENT_ROOT . "/bitrix/modules/" . $this->MODULE_ID . "/install/step.php");
 	}
 
 	public function DoUninstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION;
 		UnRegisterModule($this->MODULE_ID);
-		$APPLICATION->IncludeAdminFile(GetMessage("UNINSTALL_TITLE"), $DOCUMENT_ROOT . "/bitrix/modules/" . $this->MODULE_ID . "/install/unstep.php");
 	}
 }
