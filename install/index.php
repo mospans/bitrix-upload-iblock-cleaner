@@ -17,6 +17,7 @@ Class mospans_uploadiblockcleaner extends CModule
 		$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
 		$this->MODULE_NAME = GetMessage('NAME');
 		$this->MODULE_DESCRIPTION = GetMessage('DESCRIPTION');
+		$this->PARTNER_NAME = GetMessage('PARTNER_NAME');
 	}
 	
 	public function DoInstall()
