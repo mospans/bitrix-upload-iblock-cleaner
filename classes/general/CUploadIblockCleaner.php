@@ -30,13 +30,13 @@ class CUploadIblockCleaner {
 	}
 	
 	/**
-	 * Добавляет id файла в $this->fileIds, проверяя число ли $id
+	 * Добавляет id файла в $this->fileIds, проверяя отсутствие $id в массиве и является ли $id числом
 	 */
 	private function addFileId($id)
 	{
 		$id = (int) $id;
-		if ($id > 0 && !array_key_exists($id, $this->fileIds)) {
-			$this->fileIds[$id] = $id; // значение сохраняется в ключ для быстрого поиска
+		if ($id > 0 && !in_array($id, $this->fileIds)) {
+			$this->fileIds[] = $id;
 		}
 	}
 	
@@ -57,7 +57,7 @@ class CUploadIblockCleaner {
 	 */
 	private function getFileIds()
 	{
-		return $this->fileIds;
+		return array_unique($this->fileIds);
 	}
 	
 	public function getAnalysisSteps()
@@ -86,8 +86,8 @@ class CUploadIblockCleaner {
 		}, $filePropertiesForSelect);
 		
 		$arSelect = array_merge(array('ID', 'PREVIEW_PICTURE', 'DETAIL_PICTURE'), $filePropertiesForSelect);
-		$this->setAnalysisSteps($elementsResult->NavPageCount);
 		$elementsResult = CIBlockElement::GetList(array('ID' => 'ASC'), array(), false, array('nPageSize' => 10, 'iNumPage' => $step), $arSelect);
+		$this->setAnalysisSteps($elementsResult->NavPageCount);
 		if ($step < $this->getAnalysisSteps()) {
 			while ($element = $elementsResult->GetNext()) {
 				$this->addFileId($element['PREVIEW_PICTURE']);
