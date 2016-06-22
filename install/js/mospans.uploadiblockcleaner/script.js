@@ -5,6 +5,21 @@ window.addEventListener('load', function load(event) {
 	action,
 	actions = ['analysis'];
 	
+	function changeAction()
+	{
+		action = actions.shift();
+		changeActionState(action);
+	}
+	
+	function changeActionState(actionState)
+	{
+		var actionStates = document.querySelectorAll('.mospans-action-state');
+		for (var i = 0; i < actionStates.length; i++) {
+			actionStates[i].style.display = 'none';
+		}
+		document.querySelectorAll('.mospans-action-state_' + actionState.replace('_', '-'))[0].style.display = 'block';
+	}
+	
 	var makeStep = function () {
 		BX.ajax.post('/bitrix/admin/mospans_step_cleaner.php', {action: action, step: step}, callbackStepCleaner);
 	};
@@ -35,13 +50,15 @@ window.addEventListener('load', function load(event) {
 		if (!parsedData.action_complete) {
 			step++;
 			makeStep();
+		} else {
+			changeActionState(action + '-complete');
 		}
 	};
 	
 	var button = document.querySelectorAll('.mospans-run-clean')[0].addEventListener('click', function (event) {
 		event.preventDefault();
 		setPercentage(0);
-		action = actions.shift();
+		changeAction();
 		makeStep();
 	});
 }, false);
