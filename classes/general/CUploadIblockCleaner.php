@@ -3,7 +3,7 @@ class CUploadIblockCleaner {
 	private $MODULE_ID = 'iblock'; // id модуля из таблицы b_file, файлы которого будут чиститься
 	private $filesInStep = 100; // число файлов, обрабатываемых за один шаг
 	
-	private $elementsInStep = 100; // число файлов, обрабатываемых за один шаг
+	private $elementsInStep = 2000; // число файлов, обрабатываемых за один шаг
 	private $analysisSteps = 1; // число шагов при получении id файлов из инфоблоков
 	private $fileIds = array(); // id файлов, используемых в инфоблоках
 	
@@ -86,7 +86,7 @@ class CUploadIblockCleaner {
 		}, $filePropertiesForSelect);
 		
 		$arSelect = array_merge(array('ID', 'PREVIEW_PICTURE', 'DETAIL_PICTURE'), $filePropertiesForSelect);
-		$elementsResult = CIBlockElement::GetList(array('ID' => 'ASC'), array(), false, array('nPageSize' => 10, 'iNumPage' => $step), $arSelect);
+		$elementsResult = CIBlockElement::GetList(array('ID' => 'ASC'), array(), false, array('nPageSize' => $this->elementsInStep, 'iNumPage' => $step), $arSelect);
 		$this->setAnalysisSteps($elementsResult->NavPageCount);
 		if ($step < $this->getAnalysisSteps()) {
 			while ($element = $elementsResult->GetNext()) {
