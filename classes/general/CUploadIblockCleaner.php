@@ -3,8 +3,8 @@ class CUploadIblockCleaner {
 	private $MODULE_ID = 'iblock'; // id модуля из таблицы b_file, файлы которого будут чиститься
 	private $filesInStep = 100; // число файлов, обрабатываемых за один шаг
 	
-	private $elementsInStep = 2000; // число файлов, обрабатываемых за один шаг
-	private $analysisSteps = 1; // число шагов при получении id файлов из инфоблоков
+	private $elementsInStep = 100; // число файлов, обрабатываемых за один шаг
+	private $iblockAnalysisSteps = 1; // число шагов при получении id файлов из инфоблоков
 	private $fileIds = array(); // id файлов, используемых в инфоблоках
 	
 	public function __construct()
@@ -62,12 +62,16 @@ class CUploadIblockCleaner {
 	
 	public function getAnalysisSteps()
 	{
-		return $this->analysisSteps;
+		return $this->iblockAnalysisSteps;
 	}
 	
 	public function setAnalysisSteps($value)
 	{
-		$this->analysisSteps = (int) $value;
+		if ((int) $value > 0) {
+			$this->iblockAnalysisSteps = (int) $value;
+		} else {
+			$this->iblockAnalysisSteps = 1;
+		}
 	}
 	
 	/**
@@ -88,7 +92,7 @@ class CUploadIblockCleaner {
 		$arSelect = array_merge(array('ID', 'PREVIEW_PICTURE', 'DETAIL_PICTURE'), $filePropertiesForSelect);
 		$elementsResult = CIBlockElement::GetList(array('ID' => 'ASC'), array(), false, array('nPageSize' => $this->elementsInStep, 'iNumPage' => $step), $arSelect);
 		$this->setAnalysisSteps($elementsResult->NavPageCount);
-		if ($step < $this->getAnalysisSteps()) {
+		if ($step <= $this->getAnalysisSteps()) {
 			while ($element = $elementsResult->GetNext()) {
 				$this->addFileId($element['PREVIEW_PICTURE']);
 				$this->addFileId($element['DETAIL_PICTURE']);
@@ -140,7 +144,7 @@ class CUploadIblockCleaner {
 		$files = array();
 		
 		// используется обращение к базе напрямую, т.к. необходимо разбить выполнение скрипта на шаги, а CFile::GetList не позволяет делать выборку с использованием LIMIT и OFFSET
-		$filesResult = $DB->Query("SELECT * FROM b_file JOIN (SELECT * FROM b_file LIMIT $limit OFFSET $offset) AS b_file_slice ON b_file_slice.ID = b_file.ID"); // Запрос оптимизирован по мотивам статьи https://habrahabr.ru/post/217521/
+		$filesResult = $DB->Query("SELECT * FROM b_file JOIN (SELECT * FROM b_file WHERE MODULE_ID = '" . $this->MODULE_ID . "' LIMIT $limit OFFSET $offset) AS b_file_slice ON b_file_slice.ID = b_file.ID WHERE b_file.MODULE_ID = '" . $this->MODULE_ID . "'"); // Запрос оптимизирован по мотивам статьи https://habrahabr.ru/post/217521/
 		while ($arFile = $filesResult->Fetch()) {
 			$files[] = array(
 				'ID' => $arFile['ID'],
