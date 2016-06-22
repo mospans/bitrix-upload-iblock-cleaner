@@ -10,17 +10,29 @@ $APPLICATION->AddHeadString('<link rel="stylesheet" href="/bitrix/panel/mospans.
 
 <a class="adm-btn adm-btn-save mospans-run-clean"><?=GetMessage('OPTIONS_RUN_CLEAN')?></a>
 
-<div class="mospans-action-state mospans-action-state_analysis">
-	<?=GetMessage('OPTIONS_ACTION_STATE_ANALYSIS')?>
+<div class="mospans-action-state mospans-action-state_iblock-analysis">
+	<?=GetMessage('OPTIONS_ACTION_STATE_IBLOCK_ANALYSIS')?>
 </div>
-<div class="mospans-action-state mospans-action-state_analysis-complete">
-	<?=GetMessage('OPTIONS_ACTION_STATE_ANALYSIS_COMPLETE')?>
+<div class="mospans-action-state mospans-action-state_iblock-analysis-complete">
+	<?=GetMessage('OPTIONS_ACTION_STATE_IBLOCK_ANALYSIS_COMPLETE')?>
 </div>
-<div class="mospans-action-state mospans-action-state_file-processing">
-	<?=GetMessage('OPTIONS_ACTION_STATE_FILE_PROCESSING')?>
+<div class="mospans-action-state mospans-action-state_file-analysis">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FILE_ANALYSIS')?>
 </div>
-<div class="mospans-action-state mospans-action-state_file-processing-complete">
-	<?=GetMessage('OPTIONS_ACTION_STATE_FILE_PROCESSING_COMPLETE')?>
+<div class="mospans-action-state mospans-action-state_file-analysis-complete">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FILE_ANALYSIS_COMPLETE')?>
+</div>
+<div class="mospans-action-state mospans-action-state_file-deleting">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FILE_DELETING')?>
+</div>
+<div class="mospans-action-state mospans-action-state_file-deleting-complete">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FILE_DELETING_COMPLETE')?>
+</div>
+<div class="mospans-action-state mospans-action-state_folder-updating">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FOLDER_UPDATING')?>
+</div>
+<div class="mospans-action-state mospans-action-state_folder-updating-complete">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FOLDER_UPDATING_COMPLETE')?>
 </div>
 
 <div class="mospans-progressbar">

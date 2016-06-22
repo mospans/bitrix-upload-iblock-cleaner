@@ -3,20 +3,18 @@ window.addEventListener('load', function load(event) {
 	
 	var step = 1,
 	action,
-	actions = ['analysis'];
+	actions = ['iblock_analysis', 'file_analysis', 'file_deleting'];
 	
 	function changeAction()
 	{
 		action = actions.shift();
+		step = 1;
 		changeActionState(action);
+		makeStep();
 	}
 	
 	function changeActionState(actionState)
 	{
-		var actionStates = document.querySelectorAll('.mospans-action-state');
-		for (var i = 0; i < actionStates.length; i++) {
-			actionStates[i].style.display = 'none';
-		}
 		document.querySelectorAll('.mospans-action-state_' + actionState.replace('_', '-'))[0].style.display = 'block';
 	}
 	
@@ -39,7 +37,7 @@ window.addEventListener('load', function load(event) {
 		
 		var parsedData = JSON.parse(data);
 		if (!('error' in parsedData && !parsedData.error) || !('percentage' in parsedData) || !('action_complete' in parsedData)) {
-			alert('Error!');
+			alert('Ошибка!');
 			document.querySelectorAll('.mospans-progressbar')[0].style.display = 'none';
 			document.querySelectorAll('.mospans-run-clean')[0].style.display = 'block';
 			return;
@@ -48,10 +46,16 @@ window.addEventListener('load', function load(event) {
 		setPercentage(parsedData.percentage);
 		
 		if (!parsedData.action_complete) {
+			// если действие еще не закончено, то выполняем следующий шаг
 			step++;
 			makeStep();
 		} else {
+			// если действие закончено, то выводим статус окончания
 			changeActionState(action + '-complete');
+			if (actions.length > 0) {
+				// если еще остались доступные действия, то начинаем выполнение следующего
+				changeAction();
+			}
 		}
 	};
 	
@@ -59,6 +63,5 @@ window.addEventListener('load', function load(event) {
 		event.preventDefault();
 		setPercentage(0);
 		changeAction();
-		makeStep();
 	});
 }, false);
