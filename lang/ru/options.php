@@ -7,6 +7,6 @@ $MESS['OPTIONS_ACTION_STATE_FILE_ANALYSIS'] = 'Анализ файлов...';
 $MESS['OPTIONS_ACTION_STATE_FILE_ANALYSIS_COMPLETE'] = 'Анализ файлов завершен.';
 $MESS['OPTIONS_ACTION_STATE_FILE_DELETING'] = 'Удаление неиспользуемых файлов...';
 $MESS['OPTIONS_ACTION_STATE_FILE_DELETING_COMPLETE'] = 'Удаление неиспользуемых файлов завершено.';
-$MESS['OPTIONS_ACTION_STATE_FOLDER_UPDATING'] = 'Обновление папки /upload/iblock/...';
-$MESS['OPTIONS_ACTION_STATE_FOLDER_UPDATING_COMPLETE'] = 'Обновление папки /upload/iblock/ завершено.';
+$MESS['OPTIONS_ACTION_STATE_FOLDER_UPDATE'] = 'Обновление папки /upload/iblock/...';
+$MESS['OPTIONS_ACTION_STATE_FOLDER_UPDATE_COMPLETE'] = 'Обновление папки /upload/iblock/ завершено.';
 ?>

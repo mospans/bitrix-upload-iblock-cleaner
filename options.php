@@ -28,11 +28,11 @@ $APPLICATION->AddHeadString('<link rel="stylesheet" href="/bitrix/panel/mospans.
 <div class="mospans-action-state mospans-action-state_file-deleting-complete">
 	<?=GetMessage('OPTIONS_ACTION_STATE_FILE_DELETING_COMPLETE')?>
 </div>
-<div class="mospans-action-state mospans-action-state_folder-updating">
-	<?=GetMessage('OPTIONS_ACTION_STATE_FOLDER_UPDATING')?>
+<div class="mospans-action-state mospans-action-state_folder-update">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FOLDER_UPDATE')?>
 </div>
-<div class="mospans-action-state mospans-action-state_folder-updating-complete">
-	<?=GetMessage('OPTIONS_ACTION_STATE_FOLDER_UPDATING_COMPLETE')?>
+<div class="mospans-action-state mospans-action-state_folder-update-complete">
+	<?=GetMessage('OPTIONS_ACTION_STATE_FOLDER_UPDATE_COMPLETE')?>
 </div>
 
 <div class="mospans-progressbar">
