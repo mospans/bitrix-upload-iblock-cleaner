@@ -3,12 +3,13 @@ window.addEventListener('load', function load(event) {
 	
 	var step = 1,
 	action,
-	actions = ['iblock_analysis', 'file_analysis', 'file_deleting'];
+	actions = ['iblock_analysis', 'file_analysis', 'file_deleting', 'folder_update'];
 	
 	function changeAction()
 	{
 		action = actions.shift();
 		step = 1;
+		setPercentage(0);
 		changeActionState(action);
 		makeStep();
 	}
@@ -29,8 +30,6 @@ window.addEventListener('load', function load(event) {
 	};
 	
 	var callbackStepCleaner = function (data) {
-		document.querySelectorAll('.mospans-run-clean')[0].style.display = 'none';
-		
 		if (!data) {
 			return;
 		}
@@ -38,8 +37,6 @@ window.addEventListener('load', function load(event) {
 		var parsedData = JSON.parse(data);
 		if (!('error' in parsedData && !parsedData.error) || !('percentage' in parsedData) || !('action_complete' in parsedData)) {
 			alert('Ошибка!');
-			document.querySelectorAll('.mospans-progressbar')[0].style.display = 'none';
-			document.querySelectorAll('.mospans-run-clean')[0].style.display = 'block';
 			return;
 		}
 		
@@ -61,6 +58,7 @@ window.addEventListener('load', function load(event) {
 	
 	var button = document.querySelectorAll('.mospans-run-clean')[0].addEventListener('click', function (event) {
 		event.preventDefault();
+		document.querySelectorAll('.mospans-run-clean')[0].style.display = 'none';
 		setPercentage(0);
 		changeAction();
 	});

@@ -7,11 +7,21 @@ class CUploadIblockCleaner {
 	private $iblockAnalysisSteps = 1; // число шагов при получении id файлов из инфоблоков
 	private $fileIds = array(); // id файлов, используемых в инфоблоках
 	
+	private $documentRoot;
+	private $iblockDir;
+	private $iblockTmpDir;
+	private $iblockDelDir;
+	
 	public function __construct()
 	{
 		if (!CModule::IncludeModule('iblock')) {
 			throw new Exception('Module iblock not installed');
 		}
+		
+        $this->documentRoot = Bitrix\Main\Application::getDocumentRoot();
+        $this->iblockDir = $this->documentRoot . '/upload/iblock';
+        $this->iblockTmpDir = $this->documentRoot . '/upload/iblock_tmp';
+        $this->iblockDelDir = $this->documentRoot . '/upload/iblock_del';
 	}
 	
 	/**
@@ -140,7 +150,7 @@ class CUploadIblockCleaner {
 		}
 		global $DB;
 		$limit = $this->getFilesInStep();
-		$offset = $step * $limit;
+		$offset = ($step - 1) * $limit;
 		$files = array();
 		
 		// используется обращение к базе напрямую, т.к. необходимо разбить выполнение скрипта на шаги, а CFile::GetList не позволяет делать выборку с использованием LIMIT и OFFSET
@@ -153,5 +163,49 @@ class CUploadIblockCleaner {
 			);
 		}
 		return $files;
+	}
+	
+	/**
+	 * Создает вложенные директории рекурсивно
+	 */
+	public function createDirTreeFromPath($path)
+	{
+		if (!file_exists($path)) {
+			$parentDir = dirname($path);
+			$this->createDirTreeFromPath($parentDir);
+			mkdir($path);
+		}
+	}
+	
+	/**
+	 * Создает временную директорию
+	 */
+	public function createTmpDir()
+	{
+		$this->createDirTreeFromPath($this->iblockTmpDir);
+	}
+	
+	/**
+	 * Перемещает указанный файл из директории /upload/iblock/ во временную директорию
+	 */
+	public function moveFileToTmpDir($relativeFileName)
+	{
+		$absoluteFileNameSource = $this->iblockDir . $relativeFileName;
+		if (file_exists($absoluteFileNameSource)) {
+			$absoluteFileNameDestination = $this->iblockTmpDir . $relativeFileName;
+			$absoluteDirDestination = dirname($absoluteFileNameDestination);
+			$this->createDirTreeFromPath($absoluteDirDestination);
+			rename($absoluteFileNameSource, $absoluteFileNameDestination);
+		}
+	}
+	
+	/**
+	 * Перемещает указанный файл из директории /upload/iblock/ во временную директорию
+	 */
+	public function updateFolders()
+	{
+		rename($this->iblockDir, $this->iblockDelDir);
+		rename($this->iblockTmpDir, $this->iblockDir);
+		DeleteDirFilesEx(str_replace($this->documentRoot, '', $this->iblockDelDir)); // DeleteDirFilesEx принимает на вход относительный путь
 	}
 }
