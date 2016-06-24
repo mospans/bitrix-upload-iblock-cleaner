@@ -1,11 +1,11 @@
 <?php
 class CUploadIblockCleaner {
+	private $iblockInfo = null; // массив с информацией об инфоблоках, в которых есть элементы
+	private $elementsInStep = 1000; // число элементов, обрабатываемых за один шаг
+	private $fileIds = array(); // id файлов, используемых в инфоблоках
+	
 	private $MODULE_ID = 'iblock'; // id модуля из таблицы b_file, файлы которого будут чиститься
 	private $filesInStep = 100; // число файлов, обрабатываемых за один шаг
-	
-	private $elementsInStep = 100; // число файлов, обрабатываемых за один шаг
-	private $iblockAnalysisSteps = 1; // число шагов при получении id файлов из инфоблоков
-	private $fileIds = array(); // id файлов, используемых в инфоблоках
 	
 	private $documentRoot;
 	private $iblockDir;
@@ -70,56 +70,77 @@ class CUploadIblockCleaner {
 		return array_unique($this->fileIds);
 	}
 	
-	public function getAnalysisSteps()
+	/**
+	 * Возвращает массив с информацией об инфоблоках, в которых есть элементы
+	 */
+	public function getIblockInfo()
 	{
-		return $this->iblockAnalysisSteps;
-	}
-	
-	public function setAnalysisSteps($value)
-	{
-		if ((int) $value > 0) {
-			$this->iblockAnalysisSteps = (int) $value;
-		} else {
-			$this->iblockAnalysisSteps = 1;
+		if (is_null($this->iblockInfo)) {
+			$this->iblockInfo = array();
+
+			$iblocksResults = CIBlock::GetList(Array(), Array("CHECK_PERMISSIONS" => "N"), true);
+			while ($iblocksResult = $iblocksResults->Fetch()) {
+				if ((int) $iblocksResult['ELEMENT_CNT'] == 0) {
+					continue;
+				}
+				$iblocksResult['ID'] = (int) $iblocksResult['ID'];
+				
+				$this->iblockInfo[$iblocksResult['ID']] = array(
+					'ID' => $iblocksResult['ID'],
+					'ELEMENT_CNT' => $iblocksResult['ELEMENT_CNT'],
+					'STEPS' => ceil($iblocksResult['ELEMENT_CNT'] / $this->elementsInStep),
+					'PROPERTY_NAMES' => array(),
+					'PROPERTY_NAMES_IN_RESULT' => array()
+				);
+				
+				// получаем информацию по свойствам типа Файл:
+				$propertiesResult = CIBlockProperty::GetList(Array(), Array('IBLOCK_ID' => $iblocksResult['ID'], 'PROPERTY_TYPE' => 'F'));
+				while ($property = $propertiesResult->GetNext()) {
+					$this->iblockInfo[$iblocksResult['ID']]['PROPERTY_NAMES'][] = 'PROPERTY_' . $property["CODE"];
+					$this->iblockInfo[$iblocksResult['ID']]['PROPERTY_NAMES_IN_RESULT'][] = 'PROPERTY_' . strtoupper($property["CODE"]) . '_VALUE';
+				}
+			}
 		}
+		
+		return $this->iblockInfo;
 	}
 	
 	/**
-	 * Возвращает массив с id файлов, соответствующий очередному шагу
-	 * Возвращает false если номер шага некорректный
+	 * 
 	 */
-	public function getFilesIdInIblocksByStep($step)
+	public function getStepsInIblockAnalysis()
 	{
-		if ($step < 1) {
-			return false;
-		}
-		$filePropertiesForSelect = $this->getIblockPropertiesFiles(); // названия свойств для выборки
-		// получение массива с названиями свойств в массиве результата:
-		$filePropertiesInResult = array_map(function ($property) {
-			return strtoupper($property) . '_VALUE';
-		}, $filePropertiesForSelect);
+		$iblocksInfo = $this->getIblockInfo();
+		$steps = 0;
 		
-		$arSelect = array_merge(array('ID', 'PREVIEW_PICTURE', 'DETAIL_PICTURE'), $filePropertiesForSelect);
-		$elementsResult = CIBlockElement::GetList(array('ID' => 'ASC'), array(), false, array('nPageSize' => $this->elementsInStep, 'iNumPage' => $step), $arSelect);
-		$this->setAnalysisSteps($elementsResult->NavPageCount);
-		if ($step <= $this->getAnalysisSteps()) {
-			while ($element = $elementsResult->GetNext()) {
-				$this->addFileId($element['PREVIEW_PICTURE']);
-				$this->addFileId($element['DETAIL_PICTURE']);
-				// добавление id файлов, прикрепленных к свойствам элемента, если они есть
-				foreach ($filePropertiesInResult as $fileProperty) {
-					if (is_array($element[$fileProperty])) {
-						// для множественных свойств при хранении данных в отдельной таблице
-						$this->addArrayToFileIds($element[$fileProperty]);
-					} else {
-						$this->addFileId($element[$fileProperty]);
-					}
+		foreach ($iblocksInfo as $iblockInfo) {
+			$steps += $iblockInfo['STEPS'];
+		}
+		
+		return $steps ? $steps : 1;
+	}
+	
+	/**
+	 * Возвращает массив с id файлов? используемых в элементах указанного инфоблока на указанной странице
+	 */
+	public function getFilesIdInIblocks($iblockId, $numPage, $filePropertiesForSelect, $filePropertiesInResult)
+	{
+		$arSelect = array_merge(array('IBLOCK_ID', 'ID', 'PREVIEW_PICTURE', 'DETAIL_PICTURE'), $filePropertiesForSelect);
+		$elementsResult = CIBlockElement::GetList(array(), array('IBLOCK_ID' => $iblockId), false, array('nPageSize' => $this->elementsInStep, 'iNumPage' => $numPage), $arSelect);
+		while ($element = $elementsResult->GetNext()) {
+			$this->addFileId($element['PREVIEW_PICTURE']);
+			$this->addFileId($element['DETAIL_PICTURE']);
+			// добавление id файлов, прикрепленных к свойствам элемента, если они есть
+			foreach ($filePropertiesInResult as $fileProperty) {
+				if (is_array($element[$fileProperty])) {
+					// для множественных свойств при хранении данных в отдельной таблице
+					$this->addArrayToFileIds($element[$fileProperty]);
+				} else {
+					$this->addFileId($element[$fileProperty]);
 				}
 			}
-			return $this->getFileIds();
-		} else {
-			return false;
 		}
+		return $this->getFileIds();
 	}
 	
 	/**

@@ -20,7 +20,7 @@ $result = array(
 	'action_complete' => false
 );
 
-$stepCleaner = new CUploadIblockCleaner();
+$cleaner = new CUploadIblockCleaner();
 if (!array_key_exists('mospans.uploadiblockcleaner', $_SESSION)) {
 	$_SESSION['mospans.uploadiblockcleaner'] = array();
 }
@@ -35,19 +35,38 @@ switch ($action) {
 	case 'iblock_analysis':
 	// анализ инфоблоков на наличие файлов. Id файлов сохраняются в массив $_SESSION['mospans.uploadiblockcleaner']['using_file_ids']
 		if ($step == 1) {
+			$_SESSION['mospans.uploadiblockcleaner']['iblocks_info'] = $cleaner->getIblockInfo();
 			$_SESSION['mospans.uploadiblockcleaner']['using_file_ids'] = array();
+			$_SESSION['mospans.uploadiblockcleaner']['count_iblock_analysis_steps'] = $cleaner->getStepsInIblockAnalysis();
 		}
 		
-		// получаем очередную порцию id файлов из инфоблоков:
-		$fileIds = $stepCleaner->getFilesIdInIblocksByStep($step);
-		if (is_array($fileIds)) { 
-			// дописываем id файлов в сессию
-			$_SESSION['mospans.uploadiblockcleaner']['using_file_ids'] = array_merge($_SESSION['mospans.uploadiblockcleaner']['using_file_ids'], $fileIds);
+		// вычисляем инфоблок и номер страницы для выборки на основании шага
+		$numPage = $step;
+		$iblockId = -1;
+		foreach ($_SESSION['mospans.uploadiblockcleaner']['iblocks_info'] as $iblockInfo) {
+			if ($numPage <= $iblockInfo['STEPS']) {
+				$iblockId = (int) $iblockInfo['ID'];
+				break;
+			} else {
+				$numPage -= $iblockInfo['STEPS'];
+			}
 		}
 		
-		$result['percentage'] = round(100 * $step / $stepCleaner->getAnalysisSteps());
-		if ($step == $stepCleaner->getAnalysisSteps()) {
+		// если был найден номер инфоблока, то делаем выборку id файлов
+		if ($iblockId > 0) {			
+			// получаем очередную порцию id файлов из инфоблоков:
+			$fileIds = $cleaner->getFilesIdInIblocks($iblockId, $numPage, $_SESSION['mospans.uploadiblockcleaner']['iblocks_info'][$iblockId]['PROPERTY_NAMES'], $_SESSION['mospans.uploadiblockcleaner']['iblocks_info'][$iblockId]['PROPERTY_NAMES_IN_RESULT']);
+			if (is_array($fileIds)) { 
+				// дописываем id файлов в сессию
+				$_SESSION['mospans.uploadiblockcleaner']['using_file_ids'] = array_merge($_SESSION['mospans.uploadiblockcleaner']['using_file_ids'], $fileIds);
+			}
+		}
+		
+		$result['percentage'] = round(100 * $step / $_SESSION['mospans.uploadiblockcleaner']['count_iblock_analysis_steps']);
+		if ($step == $_SESSION['mospans.uploadiblockcleaner']['count_iblock_analysis_steps']) {
 			$result['action_complete'] = true;
+			unset($_SESSION['mospans.uploadiblockcleaner']['iblocks_info']);
+			unset($_SESSION['mospans.uploadiblockcleaner']['count_iblock_analysis_steps']);
 		}
 		break;
 		
@@ -57,21 +76,21 @@ switch ($action) {
 	// если файл используется, то мы физически копируем его во временную директорию
 	// иначе добавляем его id в массив зарегистрированных, но не используемых файлов $_SESSION['mospans.uploadiblockcleaner']['not_using_file_ids']
 		if ($step == 1) {
-			$_SESSION['mospans.uploadiblockcleaner']['count_files'] = $stepCleaner->getFilesCount();
-			$_SESSION['mospans.uploadiblockcleaner']['count_file_analysis_steps'] = ceil($_SESSION['mospans.uploadiblockcleaner']['count_files'] / $stepCleaner->getFilesInStep());
+			$_SESSION['mospans.uploadiblockcleaner']['count_files'] = $cleaner->getFilesCount();
+			$_SESSION['mospans.uploadiblockcleaner']['count_file_analysis_steps'] = ceil($_SESSION['mospans.uploadiblockcleaner']['count_files'] / $cleaner->getFilesInStep());
 			if ($_SESSION['mospans.uploadiblockcleaner']['count_file_analysis_steps'] == 0) {
 				$_SESSION['mospans.uploadiblockcleaner']['count_file_analysis_steps'] = 1;
 			}
 			$_SESSION['mospans.uploadiblockcleaner']['not_using_file_ids'] = array();
-			$stepCleaner->createTmpDir();
+			$cleaner->createTmpDir();
 		}
 		
-		$files = $stepCleaner->getFilesListByStep($step);
+		$files = $cleaner->getFilesListByStep($step);
 		foreach ($files as $file) {
 			if (!in_array($file['ID'], $_SESSION['mospans.uploadiblockcleaner']['using_file_ids'])) {
 				$_SESSION['mospans.uploadiblockcleaner']['not_using_file_ids'][] = $file['ID'];
 			} else {
-				$stepCleaner->moveFileToTmpDir('/' . $file['SUBDIR'] . '/' . $file['FILE_NAME']);
+				$cleaner->moveFileToTmpDir('/' . $file['SUBDIR'] . '/' . $file['FILE_NAME']);
 			}
 		}
 		
@@ -111,7 +130,7 @@ switch ($action) {
 	
 	case 'folder_update':
 	// удаляем старую директорию /iblock/, а временную директорию переименовываем в /iblock/
-		$stepCleaner->updateFolders();
+		$cleaner->updateFolders();
 		unset($_SESSION['mospans.uploadiblockcleaner']);
 		$result['percentage'] = 100;
 		$result['action_complete'] = true;
